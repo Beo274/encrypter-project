@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" class = 'h-100'>
+<head>
+    <meta charset="UTF-8">
+    <title>Encryption page</title>
+
+    {% extends 'encrypt/base.html' %}
+
+    {% block content %}
+
+    {% load static %}
+
+    <script>
+
+      function showA(x) {
+        if (x.checked) {
+          document.getElementById("text").style.display = "initial";
+          document.getElementById("file").style.display = "none";
+        }
+      }
+
+      function showB(x) {
+        if (x.checked) {
+          document.getElementById("file").style.display = "initial";
+          document.getElementById("text").style.display = "none";
+        }
+      }
+    </script>
+
+</head>
+<body>
+
+<!-- Main page -->
+
+<div class = 'mt-5'>
+  <h2 class = 'text-center'>Choose encryption odject</h2>
+  <div class = 'ms-4'>
+    <input class="form-check-input" type="radio" name="flexRadioDefault" onchange="showA(this)" id="flexRadioDefault1">
+    <label class="form-check-label" for="flexRadioDefault1"><h4>Text encryption</h4></label>
+  </div>
+
+  <div class="form-check ms-4">
+    <input class="form-check-input" type="radio" name="flexRadioDefault" onchange="showB(this)" id="flexRadioDefault2">
+    <label class="form-check-label" for="flexRadioDefault2"><h4>File encryption</h4></label>
+  </div>
+
+  <div id="text" style="display:none;">
+    <form method = 'POST' name = 'textform' action = '{% url "encryption" %}'>
+
+      {% csrf_token %}
+
+      <!-- {{ form.as_p }} -->
+
+      <textarea class="form-control ms-5" name = 'text' rows="3" style = "width:40%;" placeholder="Enter your text"></textarea><br>
+      <textarea class="form-control ms-5" name="password" rows="1" style = "width:40%;" placeholder="Enter your password"></textarea>
+      <button class = 'btn btn-primary' name="submit" value = 'submit'>AES</button>
+    </form>
+    {% if submitbutton == "submit" %}
+      <h1>{{ text }}</h1>
+      <h1>{{ password }}</h1>
+    {% endif %}
+  </div>
+
+  <div id="file" style="display:none;">
+    B's text
+  </div>
+</div>
+
+
+<!--&lt;!&ndash; Text encryption &ndash;&gt;-->
+
+<!--<div class="modal fade" id="textModal" tabindex="-1" aria-labelledby="textModalLabel" aria-hidden="true">-->
+<!--  <div class="modal-dialog">-->
+<!--    <div class="modal-content">-->
+<!--      <div class="modal-header">-->
+<!--        <h5 class="modal-title" id="exampleModalLabel">Choose encrypton method</h5>-->
+<!--      </div>-->
+<!--      <div class="modal-body">-->
+<!--        <form method = 'POST'>-->
+<!--          <h5>Text</h5>-->
+<!--          <textarea name="encryptedText" rows="3" cols = '56'></textarea>-->
+<!--          <h5>Password</h5>-->
+<!--          <textarea name="password" rows="1" cols = '56'></textarea>-->
+<!--          <button class = 'btn btn-warning encrypt'>ENCRYPT!</button>-->
+<!--        </form>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</div>-->
+
+<!--&lt;!&ndash; File encryption &ndash;&gt;-->
+
+<!--  <div class="modal fade" id="fileModal" tabindex="-1" aria-labelledby="fileModalLabel" aria-hidden="true">-->
+<!--    <div class="modal-dialog">-->
+<!--      <div class="modal-content">-->
+<!--        <div class="modal-header">-->
+<!--          <h5 class="modal-title" id="exampleModalLabel">Choose encrypton method</h5>-->
+<!--        </div>-->
+<!--        <div class="modal-body d-flex justify-content-evenly">-->
+<!--          <button class = 'btn btn-outline-success'>AES</button>-->
+<!--          <button class = 'btn btn-outline-success'>XOR</button>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+
+  {% endblock %}
+
+</body>
+</html>

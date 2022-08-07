@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome page</title>
+
+    {% extends 'encrypt/base.html' %}
+
+    {% block content %}
+
+    {% load static %}
+
+</head>
+<body>
+
+<!-- Main page -->
+
+<div class='mt-5'>
+    <h1 class='text-center'>Welcome, friend!</h1>
+    <h2 class='text-center'>Choose what you want to do</h2>
+    <div class='d-flex row justify-content-evenly mt-5 align-items-center'>
+        <div class="card col-4">
+          <a style="text-decoration:none;" href = '{% url "encryption" %}'>
+            <img src="{% static 'encrypt/encryption.jpg' %}" class="card-img-top mt-2">
+            <div class="card-body text-center">
+              <h3 class="card-title">Encryption</h3>
+            </div>
+          </a>
+        </div>
+        <div class="card col-4">
+          <a style="text-decoration:none;" href=''>
+            <img src="{% static 'encrypt/decryption.jpg' %}" class="card-img-top mt-2">
+            <div class="card-body">
+              <h3 class="card-title text-center">Decryption</h3>
+            </div>
+          </a>
+        </div>
+    </div>
+</div>
+
+  {% endblock %}
+
+</body>
+</html>
