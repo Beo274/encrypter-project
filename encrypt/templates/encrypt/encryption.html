@@ -10,6 +10,8 @@
 
     {% load static %}
 
+    <link rel = 'stylesheet' href = '{% static "encrypt/style.css" %}'>
+
     <script>
 
       function showA(x) {
@@ -44,21 +46,28 @@
     <label class="form-check-label" for="flexRadioDefault2"><h4>File encryption</h4></label>
   </div>
 
-  <div id="text" style="display:none;">
-    <form method = 'POST' name = 'textform' action = '{% url "encryption" %}'>
-
+  <div class = 'text' id="text" style="display:none;">
+    <!-- <form method = 'POST' name = 'textform' action = '{% url "encryption" %}'>
       {% csrf_token %}
-
-      <!-- {{ form.as_p }} -->
-
       <textarea class="form-control ms-5" name = 'text' rows="3" style = "width:40%;" placeholder="Enter your text"></textarea><br>
       <textarea class="form-control ms-5" name="password" rows="1" style = "width:40%;" placeholder="Enter your password"></textarea>
-      <button class = 'btn btn-primary' name="submit" value = 'submit'>AES</button>
-    </form>
-    {% if submitbutton == "submit" %}
-      <h1>{{ text }}</h1>
-      <h1>{{ password }}</h1>
-    {% endif %}
+      <button class = 'btn btn-primary' type = 'submit' action  name = 'AESButton' value ='pressed'>AES</button> -->
+    <!-- </form> -->
+    <!-- {% if aesbutton == 'pressed' %} -->
+      <!-- {{ form.as_p }} -->
+    <!-- {% endif %}  -->
+
+    <form method = 'POST' action = '{% url "encryption" %}'>
+      {{ form }}
+      {% csrf_token %}
+      <button class = 'btn btn-primary vision' type = 'Submit'>AES</button>
+      {{ text }}<br>
+      {{ password }}<br>
+    </form >
+    {{ text }}<br>
+    {{ ciphertext }}
+    {{ deciphertext }}
+    {{ password }}<br>
   </div>
 
   <div id="file" style="display:none;">

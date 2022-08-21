@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" class = 'h-100'>
+<head>
+    <meta charset="UTF-8">
+    <title>Encryption page</title>
+
+    {% extends 'encrypt/base.html' %}
+
+    {% block content %}
+
+    {% if submitbutton == 'Submit' %}
+      {{ text }}
+      {{ password }}
+    {% endif %}
+
+</head>
+<body>
+
+  {% endblock %}
+
+</body>
+</html>
