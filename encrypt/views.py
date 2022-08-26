@@ -1,72 +1,119 @@
 import hashlib
-from django.shortcuts import render, get_object_or_404
-from django.template import RequestContext
-from .forms import TextEncryptionForm
-from .models import Text
-from django.http import HttpResponse
+from os.path import isfile, join
+
+from django.shortcuts import render
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
+from django.core.files.storage import FileSystemStorage
+from os import listdir
+from .forms import FileForm
+from .models import File
 
 def home(request):
     return render(request, 'encrypt/home.html')
 
-# def encryption(request, *args, **kwargs):
-#     pk = kwargs.get('pk')
-#     # if request.method == 'GET':
-#     #     return render(request, 'encrypt/encryption.html', {'form':TextEncryptionForm()})
-#     # else:
-#     #     submitbutton= request.POST.get("submit")
-#     #
-#     #     text = ''
-#     #     password = ''
-#     #
-#     #     form = TextEncryptionForm(request.POST or None)
-#     #     if form.is_valid:
-#     #         text = form.cleaned_data("text")
-#     #         password = form.cleaned_data("password")
-#     #     context= {'form': form, 'text': text,
-#     #           'password':password, 'submitbutton': submitbutton}
-#     #     return render(request, 'encrypt/encryption.html', context)
-#     # form = TextEncryptionForm(request.POST or None)
-#     # if request.method == "POST" and form.is_valid():
-#     #     text = form.cleaned_data['text']
-#     #     password = form.cleaned_data['password']
-#     # return render(request, "encrypt/encryption.html", {"form":TextEncryptionForm()})
-#     if request.method == 'GET':
-#         return render(request, 'encrypt/encryption.html')
-#     else:
-#         aesbutton= request.POST.get("AESButton")
-#         form = get_object_or_404(Text, pk = pk)
-#         text = request.POST.get('text')
-#         password = request.POST.get('password')
-#         context = {'text':text, 'password':password}
-#         # return HttpResponse([aesbutton, ' ', password, ' ', text])
-#         return render(request, 'encrypt/encryption.html', {'form':form})
+def fileSave(cipherdata,file_url):
+    with open(file_url + '_encrypted.bin', 'w+', encoding="utf-8") as newFile:
+        newFile.write(cipherdata)
+    return newFile
+
+
+def aesFileEncryption(data,password,file_url):
+    key = hashlib.sha256(password.encode('utf-8')).digest()
+    cipher = AES.new(key, AES.MODE_EAX)
+    cipherdata, tag = cipher.encrypt_and_digest(data)
+
+    nonce = cipher.nonce
+    #print('nonce =', nonce, 'tag = ', tag, 'key = ', key)
+    cipherdata = nonce.decode('utf-8', errors='ignore') + 'Н' + '\n' + tag.decode('utf-8', errors='ignore') + 'Т' + '\n' + cipherdata.decode('utf-8', errors='ignore')
+    print(cipherdata)
+    newFile = fileSave(cipherdata,file_url)
+
+    return newFile
+
+def xorFileEncryption(data,password,file_url):
+    encrypted_data = []
+    cipherdata = ''
+    nonce = ''
+    tag = ''
+
+    key = bytes(password, encoding='utf-8')
+    for i in range(len(data)):
+        encrypted_data.append(data[i] ^ key[i % len(key)])
+        cipherdata += chr(encrypted_data[i])
+
+    newFile = fileSave(cipherdata, file_url)
+
+    return newFile
+
+def fileProcessing(request, buttonValue):
+    upload = request.FILES.get('upload', False)
+
+    fss = FileSystemStorage()
+    file = fss.save(upload.name, upload)
+    file_url = fss.url(file)[1:]
+
+    with open(file_url,'rb') as file:
+        data = file.read()
+
+    password = request.POST.get('filePassword')
+
+    if buttonValue == 'AESpressedFile':
+        newFile = aesFileEncryption(data,password,file_url)
+        return newFile, password
+
+    elif buttonValue == 'XORpressedFile':
+        newFile = xorFileEncryption(data,password,file_url)
+        return newFile, password
+
+def aesTextEncryption(text,password):
+    data = text.encode('utf-8')
+
+    key = hashlib.sha256(password.encode('utf-8')).digest()
+
+    cipher = AES.new(key, AES.MODE_EAX)
+    cipherdata, tag = cipher.encrypt_and_digest(data)
+
+    nonce = cipher.nonce
+    # print('nonce =', nonce, 'tag = ', tag, 'key = ', key)
+    cipherdata = nonce.decode('utf-8', errors='ignore') + 'Н' + '\n' + tag.decode('utf-8', errors='ignore') + 'Т' + '\n' + cipherdata.decode('utf-8', errors='ignore')
+    #print('\nnonce = ' + nonce.decode('utf-8', errors='ignore') + '\ntag = ' + tag.decode('utf-8', errors='ignore'))
+    return data.decode('utf-8', errors='ignore'), cipherdata
+
+def xorTextEncryption(text,password):
+    encrypted_data = []
+    cipherdata = ''
+    data = bytes(text, encoding='utf-8')
+    key = bytes(password, encoding='utf-8')
+    for i in range(len(data)):
+        encrypted_data.append(data[i] ^ key[i % len(key)])
+        cipherdata += chr(encrypted_data[i])
+    # print('key =', key)
+    return cipherdata
+
+def textProcessing(buttonValue,text,password):
+        if buttonValue == 'AESpressedText':
+            data,cipherdata = aesTextEncryption(text,password)
+            return cipherdata
+        elif buttonValue == 'XORpressedText':
+            cipherdata = xorTextEncryption(text,password)
+            return cipherdata
 
 def encryption(request):
-    text = ''
-    password = ''
-    ciphertext = ''
-    deciphertext = ''
-
-    form = TextEncryptionForm(request.POST or None)
-    if form.is_valid() and request.method == 'POST':
-        text = form.cleaned_data.get('text')
-        text = text.encode('utf-8')
-
-        password = form.cleaned_data.get('password')
-        # password = password.encode('utf-8')
-        key = hashlib.sha256(password.encode()).digest()
-
-        # Шифрование
-        cipher = AES.new(key, AES.MODE_EAX)
-        ciphertext = cipher.encrypt_and_digest(text)
-        nonce = cipher.nonce
-
-        # Дешифровка
-        #cipher = AES.new(password, AES.MODE_EAX, nonce)
-        #deciphertext = cipher.decrypt_and_verify(ciphertext, tag)
-
-    return render(request, 'encrypt/encryption.html', {'form':form, 'ciphertext':ciphertext, 'text':text, 'deciphertext':deciphertext, 'password':password})
-
+    filePassword = ''
+    cipherdata = ''
+    newFile = ''
+    if request.method == 'POST':
+        buttonValue = request.POST.get('button')
+        text = request.POST.get('text')
+        password = request.POST.get('textPassword')
+        if text == None and password == None:
+            text = ''
+            password = ''
+        if request.FILES.get('upload', False):
+            newFile,filePassword = fileProcessing(request, buttonValue)
+        else:
+            cipherdata = textProcessing(buttonValue,text,password)
+        return render(request, 'encrypt/encryption.html', {'text':text, 'textPassword':password, 'cipherdata': cipherdata, 'newFile':newFile,'filePassword':filePassword})
+    else:
+        return render(request, 'encrypt/encryption.html')
 
