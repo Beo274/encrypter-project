@@ -8,29 +8,39 @@
 
     {% block content %}
 
+    <script>
+        function copyText() {
+            var text = document.getElementById("ciphertext");
+            text.select();
+            navigator.clipboard.writeText(text.value);
+        }
+    </script>
+
 </head>
 <body>
 <div class='mt-5'>
     <h1 class='text-center'>Choose decryption odject</h1>
     <div class='d-flex justify-content-evenly h-100'>
         <div style='flex-basis:45%;'>
-            <h2 class='center'>Text decryption</h2>
-            <form method='POST' name='textform' action='{% url "encryption" %}'>
+            <h2 class='d-flex justify-content-end'>Text decryption</h2>
+            <form method='POST' name='textform'>
                 {% csrf_token %}
-                <textarea class="form-control" name='text' rows="3" style="width:100%;" placeholder="Enter your encrypted text">{{ cipherdata }}</textarea><br>
+                <textarea class="form-control" name='encryptedText' rows="3" style="width:100%;"
+                          placeholder="Enter your encrypted text">{{ ciphertext }}</textarea><br>
                 <textarea class="form-control" name="textPassword" rows="1" style="width:100%;"
                           placeholder="Enter your password">{{ textPassword }}</textarea>
-                <h2 class = 'my-2 text-center'>Choose the way the text was encrypted</h2>
+                <h2 class='my-2 text-center'>Choose the way the text was encrypted</h2>
                 <div class='d-flex justify-content-evenly my-3'>
-                    <button class='btn btn-primary col-2' id='btn' type='submit' name='button' value='AESpressedText'
+                    <button class='btn btn-primary col-2' id='btn' type='submit' name='button' value='AESdcrptText'
                             onclick='showText()'>AES
                     </button>
-                    <button class='btn btn-primary col-2' type='submit' name='button' value='XORpressedText'>XOR
+                    <button class='btn btn-primary col-2' type='submit' name='button' value='XORdcrptText'>XOR
                     </button>
                 </div>
             </form>
             <h4>Your encrypted text:</h4>
-            <textarea placeholder="Your decrypted text" readonly="readonly" class="form-control" rows="3" style="width:100%;" id="ciphertext">{{ text }}</textarea>
+            <textarea placeholder="Your decrypted text" readonly="readonly" class="form-control" rows="3"
+                      style="width:100%;" id="ciphertext">{{ deciphertext }}</textarea>
             <div class='d-flex justify-content-center my-3'>
                 <button class='btn btn-primary col-4' onclick="copyText()">Copy decrypted text</button>
             </div>
@@ -48,10 +58,9 @@
                     <textarea class="form-control" name="filePassword" rows="1" style="width:100%;"
                               placeholder="Enter your password">{{ filePassword }}</textarea>
                     <div class='d-flex justify-content-evenly my-3'>
-                        <button class='btn btn-primary col-2' id='btn' type='submit' name='button'
-                                value='AESpressedFile'>AES
+                        <button class='btn btn-primary col-2' type='submit' name='button' value='AESdcrptFile'>AES
                         </button>
-                        <button class='btn btn-primary col-2' type='submit' name='button' value='XORpressedFile'>XOR
+                        <button class='btn btn-primary col-2' type='submit' name='button' value='XORdcrptFile'>XOR
                         </button>
                     </div>
                 </form>
