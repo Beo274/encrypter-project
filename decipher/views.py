@@ -14,7 +14,7 @@ from base64 import b64decode
 def download_file(file_url):
     """
     Осуществялет скачивание файла с сервера на устройство пользователя
-    @param file_url: Путь к файлу на сервере
+    @param file_url: Файл, обёрнутый в HTTP ответ
     @return: Данные, необходимые для скачивания файла
     """
     file = file_url
@@ -38,21 +38,6 @@ def file_save(decipher_data: bytes, file_url):
     with open(file_url, 'wb') as newFile:
         newFile.write(decipher_data)
     return download_file(file_url)
-
-
-def xor_file_decryption(cipher_data: bytes, password, file_url):
-    """
-    Осуществляет расшифровку файла с помощью алгоритма XOR
-    @param cipher_data: Зашифрованные данные
-    @param password: Пароль, вводимый пользователем
-    @param file_url: Путь к файлу на сервере
-    @return: Данные, необходимые для скачивания файла
-    """
-    decrypted_data = []
-    for i in range(len(cipher_data)):
-        decrypted_data.append(cipher_data[i] ^ ord(password[i % len(password)]))
-    decipher_data = bytes(decrypted_data)
-    return file_save(decipher_data, file_url)
 
 
 def aes_file_decryption(cipher_data: bytes, password: str, file_url: str):
@@ -94,7 +79,7 @@ def file_processing(request, button_value: str):
         return xor_file_decryption(data, password, file_url)
 
 
-def xor_text_decryption(encrypted_text: str, password: str):
+def xor_decryption(cipher_data: bytes, password: str, button_value: str, file_url: str):
     """
     Осуществляет рассшифровку текстовых данных с помощью алгоритма XOR
     :param encrypted_text: зашифрованный текст
@@ -103,12 +88,14 @@ def xor_text_decryption(encrypted_text: str, password: str):
     """
     try:
         decrypted_data = []
-        for i in range(len(encrypted_text)):
-            decrypted_data.append(ord(encrypted_text[i]) ^ ord(password[i % len(password)]))
-        decrypted_text = ''
-        for i in range(len(decrypted_data)):
-            decrypted_text = decrypted_text + chr(decrypted_data[i])
-        return decrypted_text
+        for i in range(len(cipher_data)):
+            decrypted_data.append(cipher_data[i] ^ ord(password[i % len(password)]))
+        decipher_data = bytes(decrypted_data)
+
+        if 'Text' in button_value:
+            return decipher_data.decode()
+        elif 'File' in button_value:
+            return file_save(decipher_data, file_url)
     except ZeroDivisionError:
         return 'Not enough data to encrypt your text :(\nEnter some password'
 
@@ -131,7 +118,7 @@ def aes_text_decryption(cipher_text: bytes, password: str):
         print(f"Incorrect decryption. Error: {e}")
 
 
-def encrypted_text_processing(button_value: str, cipher_text: str, password):
+def encrypted_text_processing(button_value: str, cipher_text: str, password: str):
     """
     Осуществляет получение данных из формы на сервере
     @param button_value: Значение нажатой пользователем кнопки
@@ -139,13 +126,16 @@ def encrypted_text_processing(button_value: str, cipher_text: str, password):
     @param password: Пароль, введеный пользователем
     @return: Расшифрованный текст
     """
+    file_url = ''
+
     if button_value == 'AESdcrptText':
         decipher_text = aes_text_decryption(b64decode(cipher_text), password)
         decipher_text = decipher_text.decode("utf-8")
         return decipher_text
     elif button_value == 'XORdcrptText':
-        cipher_text_b64 = b64decode(cipher_text)
-        decipher_text = xor_text_decryption(cipher_text_b64.decode("utf-8"), password)
+        cipher_text = b64decode(cipher_text)
+        print(f'cipher text = {cipher_text}')
+        decipher_text = xor_decryption(cipher_text, password, button_value, file_url)
         return decipher_text
 
 

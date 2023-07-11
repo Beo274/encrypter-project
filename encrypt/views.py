@@ -1,7 +1,7 @@
 import hashlib
 import mimetypes
 import os, shutil
-from base64 import b64encode
+from base64 import b64encode,b64decode
 from wsgiref.util import FileWrapper
 from django.http import StreamingHttpResponse
 from django.shortcuts import render
@@ -74,38 +74,6 @@ def file_save(cipher_data: bytes, file_url: str):
     return download_file(file_url)
 
 
-def aes_file_encryption(binary_data: bytes, password: str, file_url: str):
-    """
-    Осуществялет шифрование файла с помощью алгоритма AES
-    @param binary_data: Данные в бинарном виде
-    @param password: Пароль, вводимый пользователем
-    @param file_url: Путь к файлу на сервере
-    @return: Данные, необходимые для скачивания файла
-    """
-    key = hashlib.sha256(password.encode('utf-8')).digest()
-    cipher = AES.new(key, AES.MODE_CBC)
-    cipher_data = cipher.encrypt(pad(binary_data, AES.block_size))
-    return file_save(cipher.iv + cipher_data, file_url)
-
-
-def xor_file_encryption(data: bytes, password: str, file_url: str):
-    """
-    Осуществялет шифрования файла с помощью алгоритма XOR
-    @param data: Данные в бинарном виде
-    @param password: Пароль, вводимый пользователем
-    @param file_url: путь к файлу на сервере
-    @return: Данные, необходимые для скачивания файла
-    """
-    try:
-        encrypted_data = []
-        for i in range(len(data)):
-            encrypted_data.append(data[i] ^ ord(password[i % len(password)]))
-        cipher_data = bytes(encrypted_data)
-        return file_save(cipher_data, file_url)
-    except ZeroDivisionError:
-        return "You did't enter encryption password.It is impossible to encrypt file"
-
-
 def file_processing(request, button_value: str):
     """
     Осуществляет получение данных из файла
@@ -121,45 +89,38 @@ def file_processing(request, button_value: str):
     with open(file_url, 'rb') as file:
         data = file.read()
     password = request.POST.get('filePassword')
-
     if button_value == 'AESpressedFile':
-        return aes_file_encryption(data, password, file_url)
+        return aes_encryption(data, password, button_value, file_url)
 
     elif button_value == 'XORpressedFile':
-        return xor_file_encryption(data, password, file_url)
+        return xor_encryption(data, password, button_value, file_url)
 
 
-def aes_text_encryption(binary_data: bytes, password: str):
-    """
-    Осуществялет AES шифрование текста
-    @param binary_data: данные в бинарном виде
-    @param password: пароль для шифрования
-    @return:строка, содержащая синициализирующий вектор и зашифрованный текст
-    """
+def aes_encryption(binary_data: bytes, password: str, button_value:str, file_url:str):
+
     key = hashlib.sha256(password.encode('utf-8')).digest()
     cipher = AES.new(key, AES.MODE_CBC)
-    cipher_text = cipher.encrypt(pad(binary_data, AES.block_size))
-    iv = cipher.iv
-    return iv + cipher_text
+    cipher_data = cipher.encrypt(pad(binary_data, AES.block_size))
+
+    if 'Text' in button_value:
+        return cipher.iv + cipher_data
+    if 'File' in button_value:
+        return file_save(cipher.iv + cipher_data, file_url)
 
 
-def xor_text_encryption(text: str, password: str):
-    """
-    Осуществляет шифрование текстовых данных
-    :param text: исходный текст
-    :param password: пароль для шифрования
-    :return: зашифрованный текст
-    """
+def xor_encryption(data: bytes, password: str, button_value: str, file_url: str):
     try:
         encrypted_data = []
-        for i in range(len(text)):
-            encrypted_data.append(ord(text[i]) ^ ord(password[i % len(password)]))
 
-        encrypted_text = ''
-        for i in range(len(encrypted_data)):
-            encrypted_text = encrypted_text + chr(encrypted_data[i])
+        for i in range(len(data)):
+            encrypted_data.append(data[i] ^ ord(password[i % len(password)]))
+        cipher_data = bytes(encrypted_data)
+        print('cipher data = ',cipher_data)
+        if 'Text' in button_value:
+            return b64encode(cipher_data)
+        elif 'File' in button_value:
+            return file_save(cipher_data, file_url)
 
-        return encrypted_text
     except ZeroDivisionError:
         return 'Not enough data to encrypt your text :(\nEnter some password'
 
@@ -172,14 +133,18 @@ def text_processing(button_value, text, password):
     @param password: Пароль введеный пользователем
     @return: Зашифрованный текст
     """
-    if button_value == 'AESpressedText':
-        cipher_text = aes_text_encryption(text.encode('utf-8'), password)
+    cipher_text = ''
+    file_url = ''
+    if 'AES' in button_value:
+        cipher_text = aes_encryption(text.encode('utf-8'), password, button_value, file_url)
         cipher_text = b64encode(cipher_text).decode('utf-8')
-        return cipher_text
-    elif button_value == 'XORpressedText':
-        cipher_text = xor_text_encryption(text, password)
-        cipher_text = b64encode(cipher_text.encode('utf-8')).decode('utf-8')
-        return cipher_text
+    elif 'XOR' in button_value:
+        cipher_text = xor_encryption(text.encode(), password, button_value, file_url)
+        print('text:', cipher_text)
+        # cipher_text - это просто строка
+        cipher_text = cipher_text.decode('utf-8')
+        print('b64:', cipher_text)
+    return cipher_text
 
 
 def encryption(request):

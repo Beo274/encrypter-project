@@ -19,7 +19,11 @@
             navigator.clipboard.writeText(text.value);
         }
 
-
+        function cleatForm(textarea) {
+            document.getElementById("text").value = ''
+            document.getElementById("password").value = ''
+            document.getElementById("ciphertext").value = ''
+        }
 
     </script>
 
@@ -36,9 +40,9 @@
             <form method='POST' name='textform' action='{% url "encryption" %}'>
                 {% csrf_token %}
                 <textarea class="form-control" name='text' rows="3" style="width:100%;"
-                          placeholder='{{ placeholder_text }}'>{{ text }}</textarea><br>
+                          placeholder='{{ placeholder_text }}' id="text">{{ text }}</textarea><br>
                 <textarea class="form-control" name="textPassword" rows="1" style="width:100%;"
-                          placeholder="{{ placeholder_password }}">{{ textPassword }}</textarea>
+                          placeholder="{{ placeholder_password }}" id = "password">{{ textPassword }}</textarea>
                 <div class='d-flex justify-content-evenly my-3'>
                     <button class='btn btn-primary col-2' id='btn' type='submit' name='button' value='AESpressedText'
                             onclick='showText()'>AES
@@ -50,7 +54,8 @@
             <h4>Your encrypted text:</h4>
             <textarea readonly="readonly" class="form-control" rows="3" style="width:100%;" id="ciphertext">{{ ciphertext }}</textarea>
             <div class='d-flex justify-content-center my-3'>
-                <button class='btn btn-primary col-4' onclick="copyText()">Copy encrypted text</button>
+                <button class='btn btn-primary col-4 mx-5' onclick="copyText()">Copy encrypted text</button>
+                <button class = 'btn btn-primary col-4 mx-5' onclick="cleatForm()">Clear the form</button>
             </div>
         </div>
         <hr width="3" color='#00000'>
